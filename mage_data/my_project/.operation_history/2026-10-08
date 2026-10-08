@@ -1,0 +1,3 @@
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "etl"}, "timestamp": 1791481318, "user": 1}
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "streamin_etl"}, "timestamp": 1791483242, "user": 1}
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "exciting_moon"}, "timestamp": 1791487794, "user": null}

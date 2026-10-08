@@ -1,0 +1,54 @@
+services:
+
+  # ── 1. Kafka (Apache KRaft, host network) ───────────────────
+  # Single listener on localhost:9092 — no external/internal split needed
+  # since everything is on the host network
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    network_mode: host
+    environment:
+      KAFKA_NODE_ID: 0
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 0@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── 2. Kafka UI (host network) ───────────────────────────────
+  # Connects to Kafka on localhost:9092 (same host network)
+  # Dashboard available at localhost:8080
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    network_mode: host
+    environment:
+      KAFKA_CLUSTERS_0_NAME: pizza-stream
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: localhost:9092
+      SERVER_PORT: 8080
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── 3. Mage AI (host network) ────────────────────────────────
+  # Independent ETL tool at localhost:6789
+  # Can reach Kafka at localhost:9092 if needed for future pipelines
+  mage:
+    image: mageai/mageai:latest
+    container_name: mage
+    network_mode: host
+    command: mage start my_project
+    volumes:
+      - .:/home/src
+    environment:
+      - REQUIRE_USER_AUTHENTICATION=0

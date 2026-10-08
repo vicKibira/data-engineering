@@ -1,0 +1,10 @@
+block_type: data_loader
+color: null
+configuration: null
+description: null
+language: python
+name: null
+pipeline: {}
+tags: []
+user:
+  username: admin

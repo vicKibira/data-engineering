@@ -1,0 +1,1 @@
+{"pizza_id": "string", "order_id": "string", "pizza_name_id": "str", "quantity": "float64", "order_date": "datetime64[ns]", "order_time": "time", "unit_price": "float64", "total_price": "float64", "pizza_size": "str", "pizza_category": "str", "pizza_ingredients": "str", "pizza_name": "str"}
