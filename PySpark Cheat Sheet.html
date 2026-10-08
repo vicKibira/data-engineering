@@ -1,0 +1,842 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PySpark Cheat Sheet</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --bg:        #0f1117;
+    --surface:   #1a1d27;
+    --border:    #2a2d3e;
+    --fg:        #e2e4ef;
+    --muted:     #8b8fa8;
+    --accent:    #e25822;
+    --accent2:   #f5a623;
+    --green:     #4ade80;
+    --blue:      #60a5fa;
+    --purple:    #c084fc;
+    --pink:      #f472b6;
+    --yellow:    #fbbf24;
+    --code-bg:   #0d0f18;
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:       #f4f5f9;
+      --surface:  #ffffff;
+      --border:   #dde0ed;
+      --fg:       #1a1d2e;
+      --muted:    #6b6f88;
+      --accent:   #d44e18;
+      --accent2:  #d4880a;
+      --green:    #16a34a;
+      --blue:     #2563eb;
+      --purple:   #9333ea;
+      --pink:     #db2777;
+      --yellow:   #d97706;
+      --code-bg:  #1a1d2e;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:       #f4f5f9;
+    --surface:  #ffffff;
+    --border:   #dde0ed;
+    --fg:       #1a1d2e;
+    --muted:    #6b6f88;
+    --accent:   #d44e18;
+    --accent2:  #d4880a;
+    --green:    #16a34a;
+    --blue:     #2563eb;
+    --purple:   #9333ea;
+    --pink:     #db2777;
+    --yellow:   #d97706;
+    --code-bg:  #1a1d2e;
+    color-scheme: light;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .spark-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 10px;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--fg);
+  }
+  .header-text p {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .badges {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .badge.orange { border-color: var(--accent); color: var(--accent); }
+
+  /* Grid layout */
+  .grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .card.wide { grid-column: 1 / -1; }
+  .card.span2 { grid-column: span 2; }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .card-head .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-orange { background: var(--accent); }
+  .dot-blue   { background: var(--blue); }
+  .dot-green  { background: var(--green); }
+  .dot-purple { background: var(--purple); }
+  .dot-pink   { background: var(--pink); }
+  .dot-yellow { background: var(--yellow); }
+
+  .card-head h2 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+  }
+
+  .card-body { padding: 12px 14px; }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border-radius: 7px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    margin: 6px 0;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #cdd6f4;
+  }
+  [data-theme="light"] pre,
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) pre { color: #cdd6f4; } }
+
+  code.inline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--code-bg);
+    color: var(--blue);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+
+  /* Syntax coloring */
+  .kw   { color: var(--purple); }   /* keyword: from, import, def, etc */
+  .fn   { color: var(--blue); }     /* function names */
+  .str  { color: var(--green); }    /* strings */
+  .cmt  { color: #555f7d; font-style: italic; } /* comments */
+  .num  { color: var(--yellow); }   /* numbers */
+  .cls  { color: var(--accent2); }  /* class names */
+  .op   { color: var(--pink); }     /* operators / special */
+  .col  { color: #89dceb; }         /* column names */
+
+  /* Concept rows */
+  .row-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .concept-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .concept-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent2);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    min-width: 110px;
+    padding-top: 1px;
+  }
+  .concept-desc {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* Two-column inside card */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .mini-section h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 5px;
+  }
+
+  /* Tag pills */
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .tag {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .tag-t  { background: rgba(96,165,250,0.12); color: var(--blue);   border: 1px solid rgba(96,165,250,0.25); }
+  .tag-a  { background: rgba(74,222,128,0.12); color: var(--green);  border: 1px solid rgba(74,222,128,0.25); }
+  .tag-w  { background: rgba(226,88,34,0.12);  color: var(--accent); border: 1px solid rgba(226,88,34,0.25); }
+
+  .label-t { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 3px; }
+  .lbl-blue   { color: var(--blue); }
+  .lbl-green  { color: var(--green); }
+  .lbl-orange { color: var(--accent); }
+
+  /* Pipeline diagram */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    margin: 8px 0;
+  }
+  .pipe-step {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+  .pipe-arrow {
+    color: var(--muted);
+    padding: 0 6px;
+    font-size: 14px;
+  }
+  .pipe-step.lazy  { border-color: rgba(96,165,250,0.5);  color: var(--blue); }
+  .pipe-step.eager { border-color: rgba(74,222,128,0.5); color: var(--green); }
+
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+  }
+  .note strong { color: var(--accent2); }
+
+  /* Compare table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+    color: var(--fg);
+  }
+  td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 14px 0 8px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+
+<header>
+  <div class="spark-logo">⚡</div>
+  <div class="header-text">
+    <h1>PySpark Cheat Sheet</h1>
+    <p>Distributed data processing with Apache Spark · Python API reference</p>
+  </div>
+  <div class="badges">
+    <span class="badge orange">Spark 3.5</span>
+    <span class="badge">PySpark</span>
+    <span class="badge">DataFrames</span>
+    <span class="badge">SQL</span>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- Session Setup -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-orange"></span><h2>Session Setup</h2></div>
+    <div class="card-body">
+      <pre><span class="kw">from</span> pyspark.sql <span class="kw">import</span> <span class="cls">SparkSession</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> <span class="op">*</span>
+
+spark <span class="op">=</span> <span class="cls">SparkSession</span>.<span class="fn">builder</span> \
+    .<span class="fn">appName</span>(<span class="str">"MyApp"</span>) \
+    .<span class="fn">config</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"8"</span>) \
+    .<span class="fn">getOrCreate</span>()
+
+<span class="cmt"># Reuse existing session (safe to call anywhere)</span>
+spark <span class="op">=</span> <span class="cls">SparkSession</span>.<span class="fn">getActiveSession</span>()
+
+<span class="cmt"># Stop session when done</span>
+spark.<span class="fn">stop</span>()</pre>
+    </div>
+  </div>
+
+  <!-- Read Data -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-blue"></span><h2>Read Data</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># CSV</span>
+df <span class="op">=</span> spark.<span class="fn">read</span>.<span class="fn">csv</span>(<span class="str">"path/file.csv"</span>, header<span class="op">=</span><span class="kw">True</span>,
+                         inferSchema<span class="op">=</span><span class="kw">True</span>)
+
+<span class="cmt"># JSON (one object per line)</span>
+df <span class="op">=</span> spark.<span class="fn">read</span>.<span class="fn">json</span>(<span class="str">"path/*.json"</span>)
+
+<span class="cmt"># Parquet (best for production)</span>
+df <span class="op">=</span> spark.<span class="fn">read</span>.<span class="fn">parquet</span>(<span class="str">"s3://bucket/data/"</span>)
+
+<span class="cmt"># Generic with options</span>
+df <span class="op">=</span> spark.<span class="fn">read</span> \
+    .<span class="fn">format</span>(<span class="str">"csv"</span>) \
+    .<span class="fn">option</span>(<span class="str">"header"</span>, <span class="str">"true"</span>) \
+    .<span class="fn">option</span>(<span class="str">"nullValue"</span>, <span class="str">"NA"</span>) \
+    .<span class="fn">load</span>(<span class="str">"path.csv"</span>)
+
+<span class="cmt"># From Pandas</span>
+df <span class="op">=</span> spark.<span class="fn">createDataFrame</span>(pandas_df)</pre>
+    </div>
+  </div>
+
+  <!-- Lazy vs Eager -->
+  <div class="card wide">
+    <div class="card-head"><span class="dot dot-purple"></span><h2>Lazy Evaluation — The Core Concept</h2></div>
+    <div class="card-body">
+      <div class="pipeline">
+        <div class="pipe-step lazy">read()</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step lazy">filter()</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step lazy">groupBy()</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step lazy">withColumn()</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step lazy">join()</div>
+        <div class="pipe-arrow">→ triggers →</div>
+        <div class="pipe-step eager">show() / count() / write</div>
+      </div>
+      <div class="two-col" style="margin-top:10px">
+        <div>
+          <p class="label-t lbl-blue">🔵 Transformations — LAZY (build the plan)</p>
+          <div class="tag-row">
+            <span class="tag tag-t">select()</span><span class="tag tag-t">filter()</span><span class="tag tag-t">groupBy()</span>
+            <span class="tag tag-t">join()</span><span class="tag tag-t">withColumn()</span><span class="tag tag-t">drop()</span>
+            <span class="tag tag-t">orderBy()</span><span class="tag tag-t">distinct()</span><span class="tag tag-t">limit()</span>
+            <span class="tag tag-t">union()</span><span class="tag tag-t">repartition()</span>
+          </div>
+        </div>
+        <div>
+          <p class="label-t lbl-green">🟢 Actions — EAGER (run the plan)</p>
+          <div class="tag-row">
+            <span class="tag tag-a">show()</span><span class="tag tag-a">count()</span><span class="tag tag-a">collect()</span>
+            <span class="tag tag-a">first()</span><span class="tag tag-a">take(n)</span><span class="tag tag-a">toPandas()</span>
+            <span class="tag tag-a">write.*()</span><span class="tag tag-a">printSchema()</span>
+          </div>
+        </div>
+      </div>
+      <div class="note"><strong>Key insight:</strong> Spark builds a DAG (Directed Acyclic Graph) of all transformations. Nothing runs until an action is called — then Spark optimizes and executes the whole plan at once.</div>
+    </div>
+  </div>
+
+  <!-- Select & Filter -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-blue"></span><h2>Select & Filter</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Select columns</span>
+df.<span class="fn">select</span>(<span class="str">"name"</span>, <span class="str">"price"</span>)
+df.<span class="fn">select</span>(df.<span class="col">name</span>, df.<span class="col">price</span>)
+df.<span class="fn">select</span>(F.<span class="fn">col</span>(<span class="str">"name"</span>), F.<span class="fn">col</span>(<span class="str">"price"</span>))
+
+<span class="cmt"># Filter / Where (identical)</span>
+df.<span class="fn">filter</span>(df.<span class="col">price</span> <span class="op">></span> <span class="num">10</span>)
+df.<span class="fn">where</span>(<span class="str">"price > 10"</span>)          <span class="cmt"># SQL string</span>
+df.<span class="fn">filter</span>((df.<span class="col">price</span> <span class="op">></span> <span class="num">10</span>) <span class="op">&</span> (df.<span class="col">size</span> <span class="op">==</span> <span class="str">"L"</span>))
+df.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"category"</span>).<span class="fn">isin</span>(<span class="str">"Veggie"</span>, <span class="str">"BBQ"</span>))
+df.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"name"</span>).<span class="fn">isNotNull</span>())
+
+<span class="cmt"># Exclude / rename</span>
+df.<span class="fn">drop</span>(<span class="str">"col_to_remove"</span>)
+df.<span class="fn">withColumnRenamed</span>(<span class="str">"old"</span>, <span class="str">"new"</span>)</pre>
+    </div>
+  </div>
+
+  <!-- Transform Columns -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-orange"></span><h2>Add & Transform Columns</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Add / overwrite a column</span>
+df.<span class="fn">withColumn</span>(<span class="str">"tax"</span>, F.<span class="fn">col</span>(<span class="str">"price"</span>) <span class="op">*</span> <span class="num">0.1</span>)
+df.<span class="fn">withColumn</span>(<span class="str">"upper_name"</span>, F.<span class="fn">upper</span>(<span class="str">"name"</span>))
+df.<span class="fn">withColumn</span>(<span class="str">"rounded"</span>, F.<span class="fn">round</span>(<span class="str">"price"</span>, <span class="num">2</span>))
+
+<span class="cmt"># Conditional: when / otherwise</span>
+df.<span class="fn">withColumn</span>(<span class="str">"tier"</span>,
+    F.<span class="fn">when</span>(F.<span class="fn">col</span>(<span class="str">"price"</span>) <span class="op">></span> <span class="num">20</span>, <span class="str">"premium"</span>)
+     .<span class="fn">when</span>(F.<span class="fn">col</span>(<span class="str">"price"</span>) <span class="op">></span> <span class="num">10</span>, <span class="str">"standard"</span>)
+     .<span class="fn">otherwise</span>(<span class="str">"budget"</span>))
+
+<span class="cmt"># Cast type</span>
+df.<span class="fn">withColumn</span>(<span class="str">"qty"</span>, F.<span class="fn">col</span>(<span class="str">"qty"</span>).<span class="fn">cast</span>(<span class="str">"int"</span>))
+
+<span class="cmt"># String ops</span>
+F.<span class="fn">concat</span>(F.<span class="fn">col</span>(<span class="str">"a"</span>), F.<span class="fn">lit</span>(<span class="str">" - "</span>), F.<span class="fn">col</span>(<span class="str">"b"</span>))
+F.<span class="fn">split</span>(F.<span class="fn">col</span>(<span class="str">"date"</span>), <span class="str">"-"</span>)[<span class="num">0</span>]    <span class="cmt"># first part</span></pre>
+    </div>
+  </div>
+
+  <!-- GroupBy & Agg -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-green"></span><h2>GroupBy & Aggregate</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Basic groupBy</span>
+df.<span class="fn">groupBy</span>(<span class="str">"category"</span>).<span class="fn">count</span>()
+
+<span class="cmt"># Multiple aggregations</span>
+df.<span class="fn">groupBy</span>(<span class="str">"category"</span>, <span class="str">"size"</span>).<span class="fn">agg</span>(
+    F.<span class="fn">sum</span>(<span class="str">"total_price"</span>).<span class="fn">alias</span>(<span class="str">"revenue"</span>),
+    F.<span class="fn">avg</span>(<span class="str">"unit_price"</span>).<span class="fn">alias</span>(<span class="str">"avg_price"</span>),
+    F.<span class="fn">count</span>(<span class="str">"*"</span>).<span class="fn">alias</span>(<span class="str">"orders"</span>),
+    F.<span class="fn">max</span>(<span class="str">"quantity"</span>).<span class="fn">alias</span>(<span class="str">"max_qty"</span>),
+)
+
+<span class="cmt"># Sort results</span>
+.<span class="fn">orderBy</span>(F.<span class="fn">desc</span>(<span class="str">"revenue"</span>))
+
+<span class="cmt"># Window functions</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> <span class="cls">Window</span>
+w <span class="op">=</span> <span class="cls">Window</span>.<span class="fn">partitionBy</span>(<span class="str">"category"</span>).<span class="fn">orderBy</span>(<span class="str">"price"</span>)
+df.<span class="fn">withColumn</span>(<span class="str">"rank"</span>, F.<span class="fn">rank</span>().<span class="fn">over</span>(w))
+df.<span class="fn">withColumn</span>(<span class="str">"running_sum"</span>, F.<span class="fn">sum</span>(<span class="str">"qty"</span>).<span class="fn">over</span>(w))</pre>
+    </div>
+  </div>
+
+  <!-- Joins -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-yellow"></span><h2>Joins</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Inner join (default)</span>
+df1.<span class="fn">join</span>(df2, <span class="str">"customer_id"</span>)
+df1.<span class="fn">join</span>(df2, <span class="str">"customer_id"</span>, <span class="str">"inner"</span>)
+
+<span class="cmt"># Left / right / full outer</span>
+df1.<span class="fn">join</span>(df2, <span class="str">"id"</span>, <span class="str">"left"</span>)
+df1.<span class="fn">join</span>(df2, <span class="str">"id"</span>, <span class="str">"right"</span>)
+df1.<span class="fn">join</span>(df2, <span class="str">"id"</span>, <span class="str">"outer"</span>)
+
+<span class="cmt"># Multi-column join</span>
+df1.<span class="fn">join</span>(df2, [<span class="str">"order_id"</span>, <span class="str">"item_id"</span>])
+
+<span class="cmt"># Join with rename to avoid ambiguity</span>
+df1.<span class="fn">join</span>(df2, df1.<span class="col">id</span> <span class="op">==</span> df2.<span class="col">ref_id</span>).<span class="fn">drop</span>(df2.<span class="col">ref_id</span>)
+
+<span class="cmt"># Semi (exists) / Anti (not exists)</span>
+df1.<span class="fn">join</span>(df2, <span class="str">"id"</span>, <span class="str">"left_semi"</span>)
+df1.<span class="fn">join</span>(df2, <span class="str">"id"</span>, <span class="str">"left_anti"</span>)</pre>
+    </div>
+  </div>
+
+  <!-- Inspect & Debug -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-pink"></span><h2>Inspect & Debug</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Schema</span>
+df.<span class="fn">printSchema</span>()        <span class="cmt"># tree view of types</span>
+df.<span class="fn">dtypes</span>               <span class="cmt"># list of (col, type) tuples</span>
+df.<span class="fn">columns</span>              <span class="cmt"># list of column names</span>
+
+<span class="cmt"># Data preview</span>
+df.<span class="fn">show</span>(<span class="num">10</span>, truncate<span class="op">=</span><span class="kw">False</span>)  <span class="cmt"># first 10, full width</span>
+df.<span class="fn">show</span>(<span class="num">5</span>, vertical<span class="op">=</span><span class="kw">True</span>)    <span class="cmt"># one column per row</span>
+df.<span class="fn">count</span>()               <span class="cmt"># total rows (action!)</span>
+df.<span class="fn">describe</span>().<span class="fn">show</span>()     <span class="cmt"># stats: mean, std, min, max</span>
+df.<span class="fn">summary</span>().<span class="fn">show</span>()      <span class="cmt"># includes quartiles</span>
+
+<span class="cmt"># Execution plan</span>
+df.<span class="fn">explain</span>()             <span class="cmt"># physical plan</span>
+df.<span class="fn">explain</span>(<span class="str">"extended"</span>)   <span class="cmt"># all plans</span>
+
+<span class="cmt"># Null check</span>
+df.<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">"x"</span>).<span class="fn">isNull</span>()).<span class="fn">count</span>()</pre>
+    </div>
+  </div>
+
+  <!-- Write Data -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-green"></span><h2>Write Data</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Parquet (best: compressed, columnar)</span>
+df.<span class="fn">write</span>.<span class="fn">parquet</span>(<span class="str">"output/path"</span>)
+
+<span class="cmt"># CSV with header</span>
+df.<span class="fn">write</span>.<span class="fn">csv</span>(<span class="str">"output/"</span>, header<span class="op">=</span><span class="kw">True</span>)
+
+<span class="cmt"># Write modes</span>
+df.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"overwrite"</span>).<span class="fn">parquet</span>(<span class="str">"out/"</span>)
+df.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"append"</span>).<span class="fn">parquet</span>(<span class="str">"out/"</span>)
+df.<span class="fn">write</span>.<span class="fn">mode</span>(<span class="str">"ignore"</span>).<span class="fn">parquet</span>(<span class="str">"out/"</span>)
+
+<span class="cmt"># Partition by column (creates sub-folders)</span>
+df.<span class="fn">write</span>.<span class="fn">partitionBy</span>(<span class="str">"year"</span>, <span class="str">"month"</span>) \
+       .<span class="fn">parquet</span>(<span class="str">"out/"</span>)
+
+<span class="cmt"># To JDBC (Postgres, MySQL, etc.)</span>
+df.<span class="fn">write</span>.<span class="fn">jdbc</span>(
+    url<span class="op">=</span><span class="str">"jdbc:postgresql://host/db"</span>,
+    table<span class="op">=</span><span class="str">"my_table"</span>,
+    mode<span class="op">=</span><span class="str">"overwrite"</span>,
+    properties<span class="op">=</span>{<span class="str">"user"</span>: <span class="str">"u"</span>, <span class="str">"password"</span>: <span class="str">"p"</span>}
+)</pre>
+    </div>
+  </div>
+
+  <!-- Spark SQL -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-blue"></span><h2>Spark SQL</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Register as a SQL view</span>
+df.<span class="fn">createOrReplaceTempView</span>(<span class="str">"orders"</span>)
+
+<span class="cmt"># Run SQL against it</span>
+result <span class="op">=</span> spark.<span class="fn">sql</span>(<span class="str">"""
+  SELECT category,
+         SUM(total_price) AS revenue,
+         COUNT(*) AS orders
+  FROM orders
+  WHERE size = 'L'
+  GROUP BY category
+  ORDER BY revenue DESC
+"""</span>)
+
+<span class="cmt"># Global view (across sessions)</span>
+df.<span class="fn">createGlobalTempView</span>(<span class="str">"global_orders"</span>)
+spark.<span class="fn">sql</span>(<span class="str">"SELECT * FROM global_temp.global_orders"</span>)
+
+<span class="cmt"># SQL ↔ DataFrame are interchangeable</span>
+<span class="cmt"># Both produce the same result and execution plan</span></pre>
+    </div>
+  </div>
+
+  <!-- UDFs -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-purple"></span><h2>UDFs — Custom Functions</h2></div>
+    <div class="card-body">
+      <pre><span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> <span class="cls">StringType</span>
+
+<span class="cmt"># Define Python function</span>
+<span class="kw">def</span> <span class="fn">label_size</span>(s):
+    <span class="kw">return</span> {<span class="str">"S"</span>: <span class="str">"Small"</span>, <span class="str">"M"</span>: <span class="str">"Medium"</span>,
+             <span class="str">"L"</span>: <span class="str">"Large"</span>, <span class="str">"XL"</span>: <span class="str">"XL"</span>}.get(s, <span class="str">"Unknown"</span>)
+
+<span class="cmt"># Register as UDF</span>
+label_udf <span class="op">=</span> F.<span class="fn">udf</span>(label_size, <span class="cls">StringType</span>())
+
+<span class="cmt"># Use it</span>
+df.<span class="fn">withColumn</span>(<span class="str">"size_label"</span>, label_udf(<span class="str">"pizza_size"</span>))
+
+<span class="cmt"># Decorator shorthand</span>
+<span class="op">@</span>F.<span class="fn">udf</span>(<span class="cls">StringType</span>())
+<span class="kw">def</span> <span class="fn">my_udf</span>(val): <span class="kw">return</span> val.<span class="fn">upper</span>() <span class="kw">if</span> val <span class="kw">else</span> <span class="kw">None</span></pre>
+      <div class="note"><strong>⚠ UDF cost:</strong> UDFs break Spark's optimizer and serialize rows to Python one-by-one. Prefer built-in <code class="inline">F.*</code> functions; they run JVM-side and are 10–100× faster.</div>
+    </div>
+  </div>
+
+  <!-- Partitions & Performance -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-orange"></span><h2>Partitions & Performance</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Check partition count</span>
+df.<span class="fn">rdd</span>.<span class="fn">getNumPartitions</span>()
+
+<span class="cmt"># Increase partitions (after large join/agg)</span>
+df.<span class="fn">repartition</span>(<span class="num">200</span>)           <span class="cmt"># random re-shuffle</span>
+df.<span class="fn">repartition</span>(<span class="num">10</span>, <span class="str">"category"</span>) <span class="cmt"># by column</span>
+
+<span class="cmt"># Decrease partitions (before write)</span>
+df.<span class="fn">coalesce</span>(<span class="num">4</span>)                  <span class="cmt"># no full shuffle</span>
+
+<span class="cmt"># Cache hot DataFrames</span>
+df.<span class="fn">cache</span>()    <span class="cmt"># = persist(MEMORY_AND_DISK)</span>
+df.<span class="fn">unpersist</span>()
+
+<span class="cmt"># Tune shuffle partitions (default 200)</span>
+spark.<span class="fn">conf</span>.<span class="fn">set</span>(<span class="str">"spark.sql.shuffle.partitions"</span>, <span class="str">"50"</span>)
+
+<span class="cmt"># Broadcast small table to avoid shuffle join</span>
+df1.<span class="fn">join</span>(F.<span class="fn">broadcast</span>(df2), <span class="str">"id"</span>)</pre>
+    </div>
+  </div>
+
+  <!-- Key Concepts -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-pink"></span><h2>Key Concepts</h2></div>
+    <div class="card-body">
+      <div class="row-list">
+        <div class="concept-row">
+          <span class="concept-label">SparkContext</span>
+          <span class="concept-desc">Entry point to cluster; manages executors. Accessed via <code class="inline">spark.sparkContext</code></span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">RDD</span>
+          <span class="concept-desc">Low-level distributed dataset. DataFrame is built on top — prefer DataFrame/SQL.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">DAG</span>
+          <span class="concept-desc">Directed Acyclic Graph of operations. Spark optimizes and executes it on action.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">Stage</span>
+          <span class="concept-desc">Group of tasks that can run without a shuffle. A shuffle boundary = new stage.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">Shuffle</span>
+          <span class="concept-desc">Data redistribution across nodes. Triggered by <code class="inline">groupBy</code>, <code class="inline">join</code>, <code class="inline">repartition</code>. Expensive.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">Partition</span>
+          <span class="concept-desc">Chunk of data processed by one task on one executor. More = more parallelism.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">Executor</span>
+          <span class="concept-desc">JVM process on a worker node that runs tasks and stores cached data.</span>
+        </div>
+        <div class="concept-row">
+          <span class="concept-label">Driver</span>
+          <span class="concept-desc">Coordinates the job: builds the DAG, schedules tasks, collects results.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common Functions Reference -->
+  <div class="card span2">
+    <div class="card-head"><span class="dot dot-yellow"></span><h2>pyspark.sql.functions Quick Reference</h2></div>
+    <div class="card-body">
+      <div class="two-col">
+        <div>
+          <p class="section-label">String</p>
+          <table>
+            <tr><td>F.upper("col")</td><td>Uppercase all chars</td></tr>
+            <tr><td>F.lower("col")</td><td>Lowercase all chars</td></tr>
+            <tr><td>F.trim("col")</td><td>Strip leading/trailing spaces</td></tr>
+            <tr><td>F.length("col")</td><td>String length</td></tr>
+            <tr><td>F.substring("col", 1, 3)</td><td>Chars at pos 1, length 3</td></tr>
+            <tr><td>F.regexp_replace("col", pattern, repl)</td><td>Regex substitution</td></tr>
+            <tr><td>F.split("col", ",")</td><td>Returns ArrayType</td></tr>
+            <tr><td>F.concat_ws("-", "a", "b")</td><td>Join with separator</td></tr>
+          </table>
+          <p class="section-label">Date & Time</p>
+          <table>
+            <tr><td>F.current_date()</td><td>Today's date</td></tr>
+            <tr><td>F.current_timestamp()</td><td>Now as timestamp</td></tr>
+            <tr><td>F.year("date_col")</td><td>Extract year</td></tr>
+            <tr><td>F.month("date_col")</td><td>Extract month (1-12)</td></tr>
+            <tr><td>F.dayofweek("date_col")</td><td>1=Sun … 7=Sat</td></tr>
+            <tr><td>F.datediff("end", "start")</td><td>Days between dates</td></tr>
+            <tr><td>F.to_date("col", "yyyy-MM-dd")</td><td>Parse string → date</td></tr>
+            <tr><td>F.date_format("col", "MM/dd")</td><td>Format date as string</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="section-label">Numeric</p>
+          <table>
+            <tr><td>F.round("col", 2)</td><td>Round to 2 decimal places</td></tr>
+            <tr><td>F.abs("col")</td><td>Absolute value</td></tr>
+            <tr><td>F.sqrt("col")</td><td>Square root</td></tr>
+            <tr><td>F.pow("col", 2)</td><td>Power / exponent</td></tr>
+            <tr><td>F.log("col")</td><td>Natural log</td></tr>
+            <tr><td>F.greatest("a", "b", "c")</td><td>Max across columns</td></tr>
+            <tr><td>F.least("a", "b", "c")</td><td>Min across columns</td></tr>
+          </table>
+          <p class="section-label">Aggregate</p>
+          <table>
+            <tr><td>F.sum("col")</td><td>Total</td></tr>
+            <tr><td>F.avg("col") / F.mean()</td><td>Average</td></tr>
+            <tr><td>F.count("col")</td><td>Non-null count</td></tr>
+            <tr><td>F.countDistinct("col")</td><td>Unique count</td></tr>
+            <tr><td>F.min("col") / F.max()</td><td>Min / Max</td></tr>
+            <tr><td>F.stddev("col")</td><td>Standard deviation</td></tr>
+            <tr><td>F.collect_list("col")</td><td>Array of all values</td></tr>
+            <tr><td>F.collect_set("col")</td><td>Array of unique values</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streaming -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-pink"></span><h2>Structured Streaming</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Read from Kafka stream</span>
+df <span class="op">=</span> spark.<span class="fn">readStream</span> \
+    .<span class="fn">format</span>(<span class="str">"kafka"</span>) \
+    .<span class="fn">option</span>(<span class="str">"kafka.bootstrap.servers"</span>, <span class="str">"localhost:9092"</span>) \
+    .<span class="fn">option</span>(<span class="str">"subscribe"</span>, <span class="str">"pizza_sales"</span>) \
+    .<span class="fn">load</span>()
+
+<span class="cmt"># Parse JSON payload</span>
+df.<span class="fn">selectExpr</span>(<span class="str">"CAST(value AS STRING)"</span>)
+
+<span class="cmt"># Write stream to console</span>
+query <span class="op">=</span> df.<span class="fn">writeStream</span> \
+    .<span class="fn">format</span>(<span class="str">"console"</span>) \
+    .<span class="fn">outputMode</span>(<span class="str">"append"</span>) \
+    .<span class="fn">start</span>()
+
+query.<span class="fn">awaitTermination</span>()   <span class="cmt"># block until stopped</span>
+query.<span class="fn">stop</span>()               <span class="cmt"># stop the stream</span></pre>
+    </div>
+  </div>
+
+  <!-- Common Patterns -->
+  <div class="card">
+    <div class="card-head"><span class="dot dot-purple"></span><h2>Common Patterns</h2></div>
+    <div class="card-body">
+      <pre><span class="cmt"># Drop duplicates</span>
+df.<span class="fn">dropDuplicates</span>()
+df.<span class="fn">dropDuplicates</span>([<span class="str">"order_id"</span>])
+
+<span class="cmt"># Fill / drop nulls</span>
+df.<span class="fn">dropna</span>()
+df.<span class="fn">dropna</span>(subset<span class="op">=</span>[<span class="str">"price"</span>])
+df.<span class="fn">fillna</span>(<span class="num">0</span>, subset<span class="op">=</span>[<span class="str">"qty"</span>])
+df.<span class="fn">fillna</span>({<span class="str">"price"</span>: <span class="num">0</span>, <span class="str">"name"</span>: <span class="str">"unknown"</span>})
+
+<span class="cmt"># Pivot table</span>
+df.<span class="fn">groupBy</span>(<span class="str">"category"</span>) \
+  .<span class="fn">pivot</span>(<span class="str">"size"</span>, [<span class="str">"S"</span>, <span class="str">"M"</span>, <span class="str">"L"</span>, <span class="str">"XL"</span>]) \
+  .<span class="fn">sum</span>(<span class="str">"total_price"</span>)
+
+<span class="cmt"># Union two DataFrames (same schema)</span>
+df1.<span class="fn">union</span>(df2)
+df1.<span class="fn">unionByName</span>(df2)   <span class="cmt"># match by col name</span>
+
+<span class="cmt"># Sample data</span>
+df.<span class="fn">sample</span>(fraction<span class="op">=</span><span class="num">0.1</span>, seed<span class="op">=</span><span class="num">42</span>)
+df.<span class="fn">limit</span>(<span class="num">1000</span>)          <span class="cmt"># first N rows</span></pre>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Apache Spark 3.5 · PySpark · Reference for local, cluster, and Kubernetes deployments
+</footer>
+
+</body></html>
